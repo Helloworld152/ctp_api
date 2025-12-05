@@ -4,6 +4,9 @@
 #include <signal.h>
 #include <cstring>
 #include <vector>
+#include <iomanip>
+#include <sstream>
+#include <ctime>
 #include "ThostFtdcMdApi.h"
 #include "ThostFtdcTraderApi.h"
 
@@ -16,6 +19,50 @@ bool g_bTraderConnected = false;
 bool g_bTraderLoggedIn = false;
 int g_nRequestID = 0;
 std::vector<std::string> g_instrumentList;
+
+struct MarketData {
+    // 基本信息
+    std::string TradingDay;          // 交易日
+    std::string InstrumentID;        // 合约代码
+    std::string ExchangeID;          // 交易所代码
+    std::string ExchangeInstID;      // 合约在交易所的代码
+    
+    // 价格信息
+    double LastPrice;                // 最新价
+    double PreSettlementPrice;       // 上次结算价
+    double PreClosePrice;            // 昨收盘
+    double OpenPrice;                // 今开盘
+    double HighestPrice;             // 最高价
+    double LowestPrice;              // 最低价
+    double ClosePrice;               // 今收盘
+    double SettlementPrice;          // 本次结算价
+    double UpperLimitPrice;          // 涨停板价
+    double LowerLimitPrice;          // 跌停板价
+    double AveragePrice;             // 当日均价
+    
+    // 持仓和成交信息
+    double PreOpenInterest;          // 昨持仓量
+    double OpenInterest;              // 持仓量
+    double Volume;                   // 数量
+    double Turnover;                 // 成交金额
+    
+    // 虚实度
+    double PreDelta;                 // 昨虚实度
+    double CurrDelta;                // 今虚实度
+    
+    // 时间信息
+    std::string UpdateTime;          // 最后修改时间
+    int UpdateMillisec;              // 最后修改毫秒
+    std::string ActionDay;           // 业务日期
+    
+    // 买盘（申买）- 使用vector
+    std::vector<double> BidPrices;   // 申买价（1-5档）
+    std::vector<int> BidVolumes;     // 申买量（1-5档）
+    
+    // 卖盘（申卖）- 使用vector
+    std::vector<double> AskPrices;   // 申卖价（1-5档）
+    std::vector<int> AskVolumes;     // 申卖量（1-5档）
+};
 
 // 行情回调类
 class CMdSpi : public CThostFtdcMdSpi
@@ -104,8 +151,8 @@ public:
             // (char*)"ag2509",    // 白银主力合约
             // (char*)"al2509",    // 铝主力合约
             // (char*)"ad2601",     // 豆粕主力合约
-            (char*)"au2601",     // 石油沥青主力合约
-            (char*)"ad2601",    // 螺纹钢主力合约
+            (char*)"TS2512",     // 石油沥青主力合约
+            (char*)"au2601",    // 螺纹钢主力合约
         };
         
         int ret = m_pMdApi->SubscribeMarketData(ppInstrumentID, 1);
@@ -119,6 +166,21 @@ public:
     // 行情数据回调
     virtual void OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData) override
     {
+        // 获取当前毫秒时间戳并转换为日期时间格式
+        auto now = std::chrono::system_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+        auto sec = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+        auto millisec = ms % 1000;
+        
+        std::time_t time_t = sec;
+        std::tm* tm = std::localtime(&time_t);
+        
+        std::ostringstream oss;
+        oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
+        oss << "." << std::setfill('0') << std::setw(3) << millisec;
+        
+        std::cout << "\n[收到行情时间: " << oss.str() << "]" << std::endl;
+        
         if (pDepthMarketData) {
             std::cout << "\n=== 行情数据结构 ===" << std::endl;
             std::cout << "交易日: " << pDepthMarketData->TradingDay << std::endl;
@@ -384,26 +446,26 @@ int main()
     }
 
     // 创建交易API实例
-    g_pTraderApi = CThostFtdcTraderApi::CreateFtdcTraderApi("./");
-    if (!g_pTraderApi) {
-        std::cout << "创建交易API实例失败" << std::endl;
-        return -1;
-    }
+    // g_pTraderApi = CThostFtdcTraderApi::CreateFtdcTraderApi("./");
+    // if (!g_pTraderApi) {
+    //     std::cout << "创建交易API实例失败" << std::endl;
+    //     return -1;
+    // }
 
     // 创建回调实例
     CMdSpi mdSpi(g_pMdApi);
-    CTraderSpi traderSpi(g_pTraderApi);
+    // CTraderSpi traderSpi(g_pTraderApi);
     
     g_pMdApi->RegisterSpi(&mdSpi);
-    g_pTraderApi->RegisterSpi(&traderSpi);
+    // g_pTraderApi->RegisterSpi(&traderSpi)
 
     // 注册前置地址
-    g_pMdApi->RegisterFront((char*)"tcp://182.254.243.31:30011");  // 模拟环境行情地址
-    g_pTraderApi->RegisterFront((char*)"tcp://182.254.243.31:30001");  // 模拟环境交易地址
+    g_pMdApi->RegisterFront((char*)"tcp://101.231.162.58:41213");  // 模拟环境行情地址
+    // g_pTraderApi->RegisterFront((char*)"tcp://182.254.243.31:30001");  // 模拟环境交易地址
 
     // 初始化API
     g_pMdApi->Init();
-    g_pTraderApi->Init();
+    // g_pTraderApi->Init();
 
     std::cout << "正在连接服务器..." << std::endl;
 
@@ -411,12 +473,12 @@ int main()
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         
-        if (!g_bConnected || !g_bTraderConnected) {
+        if (!g_bConnected) {
             std::cout << "等待连接..." << std::endl;
             continue;
         }
         
-        if (!g_bLoggedIn || !g_bTraderLoggedIn) {
+        if (!g_bLoggedIn) {
             std::cout << "等待登录..." << std::endl;
             continue;
         }
