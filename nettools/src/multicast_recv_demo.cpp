@@ -89,20 +89,12 @@ int main(int argc, char *argv[]) {
 
     hft_common::net::UdpMulticastReceiver receiver;
     try {
-        if (useIgmpV3) {
-            hft_common::net::UdpMulticastReceiverConfigV3 config;
-            config.multicast_ip = multicastIp;
-            config.interface_ip = bindIp;
-            config.source_ip = sourceIp;
-            config.port = static_cast<uint16_t>(port);
-            receiver.init_v3(config);
-        } else {
-            hft_common::net::UdpMulticastReceiverConfigV2 config;
-            config.multicast_ip = multicastIp;
-            config.interface_ip = bindIp;
-            config.port = static_cast<uint16_t>(port);
-            receiver.init_v2(config);
-        }
+        hft_common::net::UdpMulticastReceiverConfig config;
+        config.multicast_ip = multicastIp;
+        config.interface_ip = bindIp;
+        config.source_ip = sourceIp;
+        config.port = static_cast<uint16_t>(port);
+        receiver.init(config);
     } catch (const std::exception &ex) {
         std::cerr << ex.what() << std::endl;
         return 2;
