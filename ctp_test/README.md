@@ -24,6 +24,8 @@ ctp_test/
 - `auth_test`：穿透认证测试
 - `for_quote_demo`：询价示例
 - `trade_latest_price`：通过 TraderApi 批量查询配置中的合约，并输出 CSV
+- `query_trading_account`：查询交易账户资金字段
+- `query_settlement_info`：查询结算单并保存为文本文件
 
 ## 统一构建
 
@@ -52,6 +54,8 @@ quant_infra_tools/
 ./run_qry.sh
 ./run_for_quote.sh <instrument_id> <exchange_id> [config_path]
 ./run_trade_latest_price.sh [config_path]
+./bin/query_trading_account ctp_test/config/config.ini
+./bin/query_settlement_info ctp_test/config/config.ini [YYYYMMDD]
 ```
 
 也可以在仓库根目录手动运行：
@@ -62,6 +66,9 @@ quant_infra_tools/
 ./bin/query_instruments
 ./bin/for_quote_demo au2412 SHFE ctp_test/config/config.ini
 ./bin/trade_latest_price ctp_test/config/config.ini
+./bin/query_trading_account ctp_test/config/config.ini
+./bin/query_settlement_info ctp_test/config/config.ini
+./bin/query_settlement_info ctp_test/config/config.ini 20260804
 ```
 
 ## 运行前提

@@ -18,8 +18,10 @@ ARGS=(
 
 LOG_TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 LOG_FILE="$LOG_DIR/${APP_NAME}_${LOG_TIMESTAMP}.log"
+LOG_LINK="$DIR/${APP_NAME}.log"
 
 mkdir -p "$LOG_DIR"
+ln -sf "$LOG_FILE" "$LOG_LINK"
 
 
 # ===== 启动前检查 =====

@@ -14,6 +14,8 @@ add_executable(query_instruments src/query_instruments.cpp)
 add_executable(auth_test src/auth_test.cpp)
 add_executable(for_quote_demo src/for_quote_demo.cpp)
 add_executable(trade_latest_price src/trade_latest_price.cpp)
+add_executable(query_trading_account src/query_trading_account.cpp)
+add_executable(query_settlement_info src/query_settlement_info.cpp)
 
 # 链接库
 target_link_libraries(md_client thostmduserapi_se pthread)
@@ -34,6 +36,16 @@ target_link_libraries(for_quote_demo
 )
 
 target_link_libraries(trade_latest_price
+    thosttraderapi_se
+    pthread
+)
+
+target_link_libraries(query_trading_account
+    thosttraderapi_se
+    pthread
+)
+
+target_link_libraries(query_settlement_info
     thosttraderapi_se
     pthread
 )
